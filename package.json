@@ -1,0 +1,19 @@
+{
+  "name": "thing-it-device-nuimo",
+  "version": "0.0.1",
+  "description": "[thing-it-node] Device Plugin for the Senic Nuimo controller",
+  "authors": "Julian Seibert",
+  "license": "MIT, EPL",
+  "keywords": [
+    "IoT",
+    "thing-it",
+    "Senic",
+    "Nuimo"
+  ],
+  "dependencies": {
+    "nuimojs": "1.0.1"
+  },
+  "devDependencies": {
+    "thing-it-test": "0.0.13"
+  }
+}
