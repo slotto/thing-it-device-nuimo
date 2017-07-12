@@ -108,12 +108,25 @@ module.exports = {
 ;
 
 var q = require('q');
-var BacNetAdapter = require('nuimojs');
+var NuimoDevice;
+var welcomeMessage = [
+    1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 0, 0, 0, 0, 0, 0, 0, 1,
+    1, 0, 1, 1, 1, 0, 1, 0, 1,
+    1, 0, 0, 1, 0, 0, 1, 0, 1,
+    1, 0, 0, 1, 0, 0, 1, 0, 1,
+    1, 0, 0, 1, 0, 0, 1, 0, 1,
+    1, 0, 0, 1, 0, 0, 1, 0, 1,
+    1, 0, 0, 0, 0, 0, 0, 0, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1
+];
 
 /**
  *
  * @constructor
  */
+
+//TODO IMPLEMENT
 function NuimoDiscovery() {
     /**
      *
@@ -125,10 +138,7 @@ function NuimoDiscovery() {
         if (this.node.isSimulated()) {
             this.timer = setInterval(function () {
             }.bind(this), 20000);
-
-
         } else {
-
             this.logLevel = 'debug';
         }
     };
@@ -170,149 +180,176 @@ function Nuimo() {
                 this.state.initialized = true;
                 deferred.resolve();
             } else {
+
+
+                //################################################
                 this.logDebug("Starting Nuimo in non-simulated mode.");
                 //this.logDebug(this.configuration);
 
+                if (!NuimoDevice) {
+                    NuimoDevice = require("nuimojs");
+                }
+                this.nuimo = new NuimoDevice;
+                this.scan();
+                deferred.resolve();
+
+                //################################################
                 this.state.initialized = false;
 
 
-                var Nuimo = require("nuimojs");
-                this.nuimo = new Nuimo();
-
-                this.nuimo.on("discover", (device) => {
-
-                        this.logDebug(`Discovered Nuimo (${device.uuid})`);
-
-                        device.on("connect", () => {
-
-                            this.state.initialized = true;
-                            this.state.uuid = device.uuid;
-                            this.logDebug("Nuimo connected" + this.state.uuid);
-                            //this.publishStateChange();
-                        });
-
-                        device.on("disconnect", () => {
-                            this.logDebug("Nuimo disconnected");
-                            this.state.initialized = false;
-                            this.publishStateChange();
-                        });
-
-                        device.on("batteryLevelChange", (level) => {
-                            this.logDebug(`Battery level changed to ${level}%`);
-                            this.state.batteryLevel = level;
-                            this.publishStateChange();
-                        });
-
-                        device.on("rssiChange", (rssi) => {
-                            this.logDebug(`Signal strength (RSSI) changed to ${rssi}`);
-                            this.state.rssi = rssi;
-                            //this.publishStateChange();
-                        });
-
-                        device.on("press", () => {
-                            this.logDebug("Button pressed");
-                            this.state.button = true;
-                            this.publishStateChange();
-                        });
-
-                        device.on("release", () => {
-                            this.logDebug("Button released");
-                            this.state.button = false;
-                            this.publishStateChange();
-                        });
+                //Nuimo = require("nuimojs");
+                //this.nuimo = new Nuimo();
 
 
-                        device.on("swipe", (direction) => {
-                            switch (direction) {
-                                case (Nuimo.Swipe.LEFT):
-                                    this.logDebug("Swiped left");
-                                    this.publishEvent("swipeleft");
-                                    break;
-                                case (Nuimo.Swipe.RIGHT):
-                                    this.logDebug("Swiped right");
-                                    this.publishEvent("swiperight");
-                                    break;
-                                case (Nuimo.Swipe.UP):
-                                    this.logDebug("Swiped up");
-                                    this.publishEvent("swipeup");
-                                    break;
-                                case (Nuimo.Swipe.DOWN):
-                                    this.logDebug("Swiped down");
-                                    this.publishEvent("swipedown");
-                                    break;
-                            }
-                        });
+                /*
+                 this.nuimo.on("discover", (device) => {
 
-                        device.on("touch", (direction) => {
-                            switch (direction) {
-                                case (Nuimo.Area.LEFT):
-                                    this.logDebug("Touched left");
-                                    this.publishEvent("touchleft");
-                                    break;
+                 this.logDebug(`Discovered Nuimo (${device.uuid})`);
 
-                                case (Nuimo.Area.RIGHT):
-                                    this.logDebug("Touched right");
-                                    this.publishEvent("touchright");
-                                    break;
+                 device.on("connect", () => {
 
-                                case (Nuimo.Area.TOP):
-                                    this.logDebug("Touched top");
-                                    this.publishEvent("touchtop");
-                                    break;
+                 this.state.initialized = true;
+                 this.state.uuid = device.uuid;
+                 this.logDebug("Nuimo connected" + this.state.uuid);
 
-                                case (Nuimo.Area.BOTTOM):
-                                    this.logDebug("Touched bottom");
-                                    this.publishEvent("touchbottom");
-                                    break;
-                            }
-                        });
+                 this.setDisplay([
+                 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                 1, 0, 0, 0, 0, 0, 0, 0, 1,
+                 1, 0, 1, 1, 1, 0, 1, 0, 1,
+                 1, 0, 0, 1, 0, 0, 1, 0, 1,
+                 1, 0, 0, 1, 0, 0, 1, 0, 1,
+                 1, 0, 0, 1, 0, 0, 1, 0, 1,
+                 1, 0, 0, 1, 0, 0, 1, 0, 1,
+                 1, 0, 0, 0, 0, 0, 0, 0, 1,
+                 1, 1, 1, 1, 1, 1, 1, 1, 1
+                 ], 255, 500, true, false);
 
-                        device.on("rotate", (amount) => {
-                            //this.logDebug(`Rotated by ${amount}`);
 
-                            let newRotate = this.state.rotate + amount;
+                 });
 
-                            if (newRotate < 0) {
-                                newRotate = 0;
-                            }
+                 device.on("disconnect", () => {
+                 this.logDebug("Nuimo disconnected");
+                 this.state.initialized = false;
+                 this.publishStateChange();
+                 });
 
-                            if (newRotate > 2730) {
-                                newRotate = 2730;
-                            }
+                 device.on("batteryLevelChange", (level) => {
+                 this.logDebug(`Battery level changed to ${level}%`);
+                 this.state.batteryLevel = level;
+                 this.publishStateChange();
+                 });
 
-                            this.state.rotate = newRotate;
-                            this.publishStateChange();
-                            this.logDebug(`State.rotate: ${this.state.rotate}`);
+                 device.on("rssiChange", (rssi) => {
+                 this.logDebug(`Signal strength (RSSI) changed to ${rssi}`);
+                 this.state.rssi = rssi;
+                 //this.publishStateChange();
+                 });
 
-                        });
+                 device.on("press", () => {
+                 this.logDebug("Button pressed");
+                 this.state.button = true;
+                 this.publishStateChange();
+                 });
 
-                        device.on("fly", (direction, speed) => {
-                            switch (direction) {
-                                case (Nuimo.Fly.LEFT):
-                                    this.logDebug(`Flew left by speed ${speed}`);
-                                    this.publishEvent("flyleft");
-                                    break;
-                                case (Nuimo.Fly.RIGHT):
-                                    this.logDebug(`Flew right by speed ${speed}`);
-                                    this.publishEvent("flyright");
-                                    break;
-                            }
+                 device.on("release", () => {
+                 this.logDebug("Button released");
+                 this.state.button = false;
+                 this.publishStateChange();
+                 });
 
-                        });
 
-                        device.on("detect", (distance) => {
-                            this.logDebug(`Detected hand at distance ${distance}`);
-                            this.state.distance = distance;
-                            this.publishStateChange();
-                            //TODO Schould that be an Event? hence it is countinously triggerd as long as an hand is detected and then will stuck at the last value
-                        });
+                 device.on("swipe", (direction) => {
+                 switch (direction) {
+                 case (Nuimo.Swipe.LEFT):
+                 this.logDebug("Swiped left");
+                 this.publishEvent("swipeleft");
+                 break;
+                 case (Nuimo.Swipe.RIGHT):
+                 this.logDebug("Swiped right");
+                 this.publishEvent("swiperight");
+                 break;
+                 case (Nuimo.Swipe.UP):
+                 this.logDebug("Swiped up");
+                 this.publishEvent("swipeup");
+                 break;
+                 case (Nuimo.Swipe.DOWN):
+                 this.logDebug("Swiped down");
+                 this.publishEvent("swipedown");
+                 break;
+                 }
+                 });
 
-                        device.connect();
-                        deferred.resolve();
-                    }
-                );
+                 device.on("touch", (direction) => {
+                 switch (direction) {
+                 case (Nuimo.Area.LEFT):
+                 this.logDebug("Touched left");
+                 this.publishEvent("touchleft");
+                 break;
 
-                this.nuimo.scan();
+                 case (Nuimo.Area.RIGHT):
+                 this.logDebug("Touched right");
+                 this.publishEvent("touchright");
+                 break;
+
+                 case (Nuimo.Area.TOP):
+                 this.logDebug("Touched top");
+                 this.publishEvent("touchtop");
+                 break;
+
+                 case (Nuimo.Area.BOTTOM):
+                 this.logDebug("Touched bottom");
+                 this.publishEvent("touchbottom");
+                 break;
+                 }
+                 });
+
+                 device.on("rotate", (amount) => {
+                 //this.logDebug(`Rotated by ${amount}`);
+
+                 let newRotate = this.state.rotate + amount;
+
+                 if (newRotate < 0) {
+                 newRotate = 0;
+                 }
+
+                 if (newRotate > 2730) {
+                 newRotate = 2730;
+                 }
+
+                 this.state.rotate = newRotate;
+                 this.publishStateChange();
+                 this.logDebug(`State.rotate: ${this.state.rotate}`);
+
+                 });
+
+                 device.on("fly", (direction, speed) => {
+                 switch (direction) {
+                 case (Nuimo.Fly.LEFT):
+                 this.logDebug(`Flew left by speed ${speed}`);
+                 this.publishEvent("flyleft");
+                 break;
+                 case (Nuimo.Fly.RIGHT):
+                 this.logDebug(`Flew right by speed ${speed}`);
+                 this.publishEvent("flyright");
+                 break;
+                 }
+
+                 });
+
+                 device.on("detect", (distance) => {
+                 this.logDebug(`Detected hand at distance ${distance}`);
+                 this.state.distance = distance;
+                 this.publishStateChange();
+                 //TODO Schould that be an Event? hence it is countinously triggerd as long as an hand is detected and then will stuck at the last value
+                 });
+
+                 device.connect();
+
+                 deferred.resolve();
+                 }
+                 );
+                 */
+                //this.nuimo.scan();
             }
 
 
@@ -355,28 +392,20 @@ Nuimo.prototype.stop = function () {
  *
  */
 //TODO
-Nuimo.prototype.setDisplay = function () {
+Nuimo.prototype.setDisplay = function (matrix, brightness, time, onionSkinning, builtinMatrix) {
     var deferred = q.defer();
 
     if (this.isSimulated()) {
         this.logDebug("Something useful");
     } else {
-
-        this.adapter.release(this.bacNetDevice)
-            .then(function () {
-                deferred.resolve();
-            }.bind(this))
-            .fail(function (e) {
-                this.logError(e);
-                deferred.reject(e);
-            }.bind(this));
+        this.device.setLEDMatrix(matrix, brightness, time, {
+            onionSkinning: onionSkinning,
+            builtinMatrix: builtinMatrix
+        });
+        deferred.resolve();
     }
-
-    deferred.resolve();
-
     return deferred.promise;
-}
-;
+};
 
 /**
  *
@@ -391,4 +420,38 @@ Nuimo.prototype.getState = function () {
 Nuimo.prototype.setState = function () {
 };
 
+
+Nuimo.prototype.connect = function () {
+
+    this.device.connect();
+
+    this.device.on("connect", () => {
+
+        this.state.initialized = true;
+        this.state.uuid = this.device.uuid;
+        this.logDebug("Nuimo connected and welcome message send");
+
+        this.setDisplay(welcomeMessage, 10, 5000, true, false);
+
+
+    });
+};
+
+Nuimo.prototype.scan = function () {
+    this.logDebug("Scanning for Nuimo started");
+
+    this.nuimo.on("discover", (device) => {
+        this.device = device;
+
+        /*this.nuimo.on('disconnect', function () {
+         this.logDebug('\nDisconnected.');
+         this.scan();
+         }.bind(this));
+         */
+        this.connect();
+
+    });
+
+    this.nuimo.scan();
+};
 
